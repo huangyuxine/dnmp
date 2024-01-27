@@ -100,7 +100,7 @@ exit
 docker rm f0af8d480cc3
 ```
 
-## 实战
+## Nginx+PHP
 
 所在目录`～/php/test`
 
@@ -399,9 +399,71 @@ docker run --name nginx \
 -v /Users/tomato/php/test/logs/nginx:/var/log/nginx:rw \
 -p 8080:80 \
 --net=local \
--d 74077e780ec7
+-d 74077e780ec
 ```
 
 ## 小插曲
 
 [toc] 生成目录，github上不显示，vscode使用`Markdown All in One`插件。打开文档，`command+shift+p`输入找到`create table of contents`这个选项回车即可。
+
+## MySQL+Redis
+
+### MySQL
+
+#### 拉取
+
+```
+docker pull mysql:8.3
+```
+
+#### 本地创建文件
+
+`services/mysql83/mysql.cnf`
+
+```
+slow_query_log
+long_query_time         = 3
+slow-query-log-file     = /var/log/mysql/mysql.slow.log
+log-error               = /var/log/mysql/mysql.error.log
+```
+
+#### 运行
+
+```shell
+docker run --name mysql83 \
+-e MYSQL_ROOT_PASSWORD=123123 \
+-v ./services/mysql83/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro \
+-v ./logs/mysql83:/var/log/mysql:rw \
+--net=local \
+-d mysql:8.3
+```
+
+#### 测试
+
+`localhost/index.php`
+
+```php
+<?php
+
+    $mysql = "mysql83";
+    
+    $pdo = new PDO("mysql:host={$mysql};dbname=mysql", 'root', '123123');
+
+    var_dump($pdo);
+```
+
+报错如下
+
+>**Fatal error**: Uncaught PDOException: could not find driver in /www/localhost/index.php:5 Stack trace: #0 /www/localhost/index.php(5): PDO->__construct('mysql:host=mysq...', 'root', Object(SensitiveParameterValue)) #1 {main} thrown in **/www/localhost/index.php** on line **5**
+
+原因是没有`pdo_mysql`扩展
+
+#### 安装扩展
+
+进入php容器内部，执行
+
+```
+docker-php-ext-install pdo_mysql
+```
+
+然后刷新一下页面，至此mysql链接成功

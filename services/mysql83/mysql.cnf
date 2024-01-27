@@ -1,0 +1,5 @@
+
+slow_query_log
+long_query_time         = 3
+slow-query-log-file     = /var/log/mysql/mysql.slow.log
+log-error               = /var/log/mysql/mysql.error.log

@@ -1,0 +1,10 @@
+2024-01-27T13:12:03.899705Z 0 [System] [MY-015017] [Server] MySQL Server Initialization - start.
+2024-01-27T13:12:03.900556Z 0 [Warning] [MY-010915] [Server] 'NO_ZERO_DATE', 'NO_ZERO_IN_DATE' and 'ERROR_FOR_DIVISION_BY_ZERO' sql modes should be used with strict mode. They will be merged with strict mode in a future release.
+2024-01-27T13:12:03.900583Z 0 [Warning] [MY-010918] [Server] 'default_authentication_plugin' is deprecated and will be removed in a future release. Please use authentication_policy instead.
+2024-01-27T13:12:03.900614Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.3.0) initializing of server in progress as process 81
+2024-01-27T13:12:03.906309Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2024-01-27T13:12:04.073677Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2024-01-27T13:12:04.591265Z 0 [ERROR] [MY-000068] [Server] unknown option '--skip-character-set-client-handshake'.
+2024-01-27T13:12:04.591665Z 0 [ERROR] [MY-013236] [Server] The designated data directory /var/lib/mysql/ is unusable. You can remove all files that the server added to it.
+2024-01-27T13:12:04.591761Z 0 [ERROR] [MY-010119] [Server] Aborting
+2024-01-27T13:12:06.044234Z 0 [System] [MY-015018] [Server] MySQL Server Initialization - end.
