@@ -405,4 +405,3 @@ docker run --name nginx \
 ## 小插曲
 
 [toc] 生成目录，github上不显示，vscode使用`Markdown All in One`插件。打开文档，`command+shift+p`输入找到`create table of contents`这个选项回车即可。
-
