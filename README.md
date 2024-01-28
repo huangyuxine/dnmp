@@ -40,10 +40,9 @@
     - [安装扩展](#安装扩展-1)
     - [测试](#测试-2)
 
-
 ## 镜像搜索
 
-```docker search php
+```docker
 docker search php
 ```
 
@@ -149,7 +148,7 @@ docker run --name nginx \
 
 确保容器映射的文件存在，不然会报下面错误
 
->Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type.
+> Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type.
 
 先不挂载将配置文件复制过来，虽然没有完全运行起来，但是容器已经创建了，先把容器删掉
 
@@ -303,8 +302,8 @@ docker run --name nginx \
 
 ```php
 <?php
-  
-	phpinfo();
+
+    phpinfo();
 ```
 
 配置`conf.d/default.conf`
@@ -449,6 +448,7 @@ docker run --name mysql83 \
 -v ./logs/mysql83:/var/log/mysql:rw \
 -v ./data/mysql83:/var/lib/mysql/:rw \
 --net=local \
+-p 3306:3306 \
 -d mysql:8.3
 ```
 
@@ -460,7 +460,7 @@ docker run --name mysql83 \
 <?php
 
     $mysql = "mysql83";
-    
+
     $pdo = new PDO("mysql:host={$mysql};dbname=mysql", 'root', '123123');
 
     var_dump($pdo);
@@ -468,7 +468,7 @@ docker run --name mysql83 \
 
 报错如下
 
->**Fatal error**: Uncaught PDOException: could not find driver in /www/localhost/index.php:5 Stack trace: #0 /www/localhost/index.php(5): PDO->__construct('mysql:host=mysq...', 'root', Object(SensitiveParameterValue)) #1 {main} thrown in **/www/localhost/index.php** on line **5**
+> **Fatal error**: Uncaught PDOException: could not find driver in /www/localhost/index.php:5 Stack trace: #0 /www/localhost/index.php(5): PDO->__construct('mysql:host=mysq...', 'root', Object(SensitiveParameterValue)) #1 {main} thrown in **/www/localhost/index.php** on line **5**
 
 原因是没有`pdo_mysql`扩展
 
@@ -515,6 +515,7 @@ docker run --name redis \
 -v ./services/redis/redis.conf:/etc/redis/redis.conf \
 -v ./data/redis:/data:rw \
 --net=local \
+-p 6379:6379 \
 -d redis:7.2.4 redis-server /etc/redis/redis.conf
 ```
 
@@ -534,4 +535,5 @@ pecl install -o -f redis \
   $auth = $redis->auth('123123'); 
   var_dump($auth);
 ```
+
 
