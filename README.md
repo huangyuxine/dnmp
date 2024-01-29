@@ -1,44 +1,4 @@
-- [镜像搜索](#镜像搜索)
-- [拉取镜像](#拉取镜像)
-- [查看镜像](#查看镜像)
-- [删除镜像](#删除镜像)
-- [查看容器](#查看容器)
-- [停止容器](#停止容器)
-- [启动容器](#启动容器)
-- [进入容器](#进入容器)
-- [删除容器](#删除容器)
-- [Nginx+PHP](#nginxphp)
-  - [Nginx](#nginx)
-    - [安装](#安装)
-    - [运行](#运行)
-  - [PHP](#php)
-    - [安装](#安装-1)
-    - [运行](#运行-1)
-    - [进入容器](#进入容器-1)
-    - [删除](#删除)
-    - [重新运行](#重新运行)
-    - [测试](#测试)
-- [通信](#通信)
-  - [使用IP](#使用ip)
-  - [自定义网络](#自定义网络)
-    - [创建](#创建)
-    - [查看](#查看)
-    - [删除网络](#删除网络)
-    - [修改php和nginx的通信](#修改php和nginx的通信)
-- [小插曲](#小插曲)
-- [MySQL+Redis](#mysqlredis)
-  - [MySQL](#mysql)
-    - [拉取](#拉取)
-    - [本地创建文件](#本地创建文件)
-    - [运行](#运行-2)
-    - [测试](#测试-1)
-    - [安装扩展](#安装扩展)
-  - [Redis](#redis)
-    - [文件创建](#文件创建)
-    - [拉取](#拉取-1)
-    - [运行](#运行-3)
-    - [安装扩展](#安装扩展-1)
-    - [测试](#测试-2)
+# 基本命令
 
 ## 镜像搜索
 
@@ -111,6 +71,8 @@ exit
 ```
 docker rm f0af8d480cc3
 ```
+
+# 实战一
 
 ## Nginx+PHP
 
@@ -534,6 +496,115 @@ pecl install -o -f redis \
   $redis->connect('redis', 6379);
   $auth = $redis->auth('123123'); 
   var_dump($auth);
+```
+
+# 实战二
+
+### 预备知识
+
+docker-compose管理多个容器。
+
+用YAML文件编写的工具，它可以让用户在单个文件中定义和运行多个Docker容器。
+
+- 快速部署：可以通过一条命令在多个容器上启动和停止服务，简化了部署流程。
+
+- 环境隔离：每个容器都有自己的文件系统和独立的网络，保证了不同应用的隔离性。
+
+- 方便管理：可以对多个容器进行同时管理
+
+```
+docker-compose up -d #启动，如果本地没有镜像，会先拉取镜像
+docker-compose ps #查看正在运行的容器
+docker-compose down #停止所有容器
+docker-compose restart #重启所有容器
+
+docker-compose stop php74 #停止某个容器
+docker-compose start php74 #启用某个容器
+docker-compose restart php74 #重启某个容器
+
+docker-compose top #查看各个容器内运行的进程
+
+docker-compose exec nginx sh #进入某个容器
+
+docker-compose logs -f nginx #查看实时日志
+```
+
+接着实战一继续，删掉已经创建的容器，创建`docker-compose.yml`文件，内容如下
+
+```yaml
+version: '3'
+services:
+  php: #创建 php的容器
+    container_name: php83 #容器名称
+    image: php:8.3.2-fpm #镜像
+    expose:
+      - 9501
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    environment:
+        - TZ=Asia/Shanghai
+    volumes:
+      - ./www:/www #映射项目目录
+  php74: #创建 php的容器
+    container_name: php74 #容器名称
+    image: php:7.4.33-fpm #镜像
+    expose:
+      - 9502
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    environment:
+        - TZ=Asia/Shanghai
+    volumes:
+      - ./www:/www #映射项目目录
+  nginx: #创建 nginx容器
+    container_name: nginx
+    image: nginx:1.25.3-alpine
+    ports:  #映射 80和443端口到本机
+      - 80:80
+      - 443:443
+    restart: always
+    environment:
+        - TZ=Asia/Shanghai
+    volumes:
+      - ./www:/www:rw  #映射项目目录
+      - ./services/nginx/conf.d:/etc/nginx/conf.d:rw #映射配置目录
+      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf:ro #映射配置文件
+      - ./logs/nginx:/var/log/nginx:rw #映射日志文件
+  mysql:
+    container_name: mysql83
+    image: mysql:8.3
+    volumes:
+      - ./services/mysql83/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+      - ./logs/mysql83:/var/log/mysql:rw
+      - ./data/mysql83:/var/lib/mysql/:rw
+    ports:
+      - 3306:3306
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=123123 #root密码
+  redis: #创建 reids的容器
+    container_name: redis
+    image: redis:7.2.4
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - 6379:6379
+    volumes:
+      - ./services/redis/redis.conf:/etc/redis/redis.conf
+      - ./data/redis:/data:rw
+    command: /bin/sh -c "redis-server /etc/redis/redis.conf" # 指定配置文件
+    # entrypoint: ["redis-server", "/etc/redis.conf"]
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+```
+
+一键启动
+
+```
+ docker-compose up -d
 ```
 
 
