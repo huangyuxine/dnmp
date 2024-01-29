@@ -500,7 +500,7 @@ pecl install -o -f redis \
 
 # 实战二
 
-### 预备知识
+## docker-compose
 
 docker-compose管理多个容器。
 
@@ -605,6 +605,145 @@ networks:
 
 ```
  docker-compose up -d
+```
+
+## .env
+
+文件仅在使用docker-compose.yml 文件时的预处理步骤中使用。
+
+`.env`
+
+```
+#项目目录
+ROOT_DIR=./www
+
+#数据目录
+DATA_DIR=./data
+
+# 容器时区
+TZ=Asia/Shanghai
+
+# Nginx
+NGINX_VERSION=1.25.3-alpine
+NGINX_CONTAINER_NAME=nginx
+NGINX_HTTP_HOST_PORT=80
+NGINX_HTTPS_HOST_PORT=443
+NGINX_CONFD_DIR=./services/nginx/conf.d
+NGINX_CONF_FILE=./services/nginx/nginx.conf
+NGINX_SSL_DIR=./services/nginx/ssl
+NGINX_LOG_DIR=./logs/nginx
+
+#MySQL8.3
+MYSQL_VERSION=8.3
+MYSQL_CONTAINER_NAME=mysql83
+MYSQL_HOST_PORT=3306
+MYSQL_ROOT_PASSWORD=123123
+MYSQL_CONF_FILE=./services/mysql83/mysql.cnf
+MYSQL_DATA_DIR=./data/mysql83
+MYSQL_LOG_DIR=./logs/mysql83
+
+#Redis
+REDIS_VERSION=7.2.4
+REDIS_CONTAINER_NAME=redis
+REDIS_HOST_PORT=6379
+REDIS_CONF_FILE=./services/redis/redis.conf
+REDIS_DATA_FILE=./data/redis
+
+#PHP8.3
+PHP_VERSION=8.3.2-fpm
+PHP_CONTAINER_NAME=php83
+PHP_CONF_FILE=./services/php80/php.ini
+PHP_FPM_CONF_FILE=./services/php80/php-fpm.conf
+PHP_LOG_DIR=./logs/php80
+
+#PHP7.4
+PHP74_VERSION=7.4.33-fpm
+PHP74_CONTAINER_NAME=php74
+PHP74_CONF_FILE=./services/php74/php.ini
+PHP74_FPM_CONF_FILE=./services/php74/php-fpm.conf
+PHP74_LOG_DIR=./logs/php74
+```
+
+
+
+`docker-compose.yml`
+
+```yml
+version: '3'
+services:
+  php: #创建 php的容器
+    container_name: ${PHP_CONTAINER_NAME} #容器名称
+    image: php:${PHP_VERSION} #镜像
+    expose:
+      - 9501
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    environment:
+        - TZ=$TZ
+    # build: ./php #直接到 ./php文件下找Dockerfile
+    volumes:
+      - ${ROOT_DIR}:/www #映射项目目录
+      
+  php74: #创建 php的容器
+    container_name: ${PHP74_CONTAINER_NAME} #容器名称
+    image: php:${PHP74_VERSION} #镜像
+    expose:
+      - 9502
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    environment:
+        - TZ=$TZ
+    # build: ./php #直接到 ./php文件下找Dockerfile
+    volumes:
+      - ${ROOT_DIR}:/www #映射项目目录
+
+  nginx: #创建 nginx容器
+    container_name: ${NGINX_CONTAINER_NAME}
+    image: nginx:${NGINX_VERSION}
+    ports:  #映射 80和443端口到本机
+      - ${NGINX_HTTP_HOST_PORT}:80
+      - ${NGINX_HTTPS_HOST_PORT}:443
+    restart: always
+    environment:
+        - TZ=$TZ
+    volumes:
+      - ${ROOT_DIR}:/www:rw  #映射项目目录
+      - ${NGINX_CONFD_DIR}:/etc/nginx/conf.d:rw #映射配置目录
+      - ${NGINX_CONF_FILE}:/etc/nginx/nginx.conf:ro #映射配置文件
+      - ${NGINX_LOG_DIR}:/var/log/nginx:rw #映射日志文件
+      - ${NGINX_SSL_DIR}:/ssl:rw #ssl证书目录
+
+  mysql:
+    container_name: ${MYSQL_CONTAINER_NAME}
+    image: mysql:${MYSQL_VERSION}
+    volumes:
+      - ${MYSQL_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
+      - ${MYSQL_LOG_DIR}:/var/log/mysql:rw
+      - ${MYSQL_DATA_DIR}:/var/lib/mysql:rw
+    ports:
+      - ${MYSQL_HOST_PORT}:3306
+    restart: always
+    environment:
+      - TZ=$TZ
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} #root密码
+
+  redis: #创建 reids的容器
+    container_name: ${REDIS_CONTAINER_NAME}
+    image: redis:${REDIS_VERSION}
+    restart: always
+    environment:
+      - TZ=$TZ
+    ports:
+      - ${REDIS_HOST_PORT}:6379
+    volumes:
+      - ${REDIS_CONF_FILE}:/etc/redis/redis.conf
+      - ${REDIS_DATA_FILE}:/data:rw
+    command: /bin/sh -c "redis-server /etc/redis/redis.conf" # 指定配置文件
+    # entrypoint: ["redis-server", "/etc/redis.conf"]
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
 ```
 
 

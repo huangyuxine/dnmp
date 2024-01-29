@@ -1,0 +1,75 @@
+version: '3'
+services:
+  php: #创建 php的容器
+    container_name: ${PHP_CONTAINER_NAME} #容器名称
+    image: php:${PHP_VERSION} #镜像
+    expose:
+      - 9501
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    environment:
+        - TZ=$TZ
+    # build: ./php #直接到 ./php文件下找Dockerfile
+    volumes:
+      - ${ROOT_DIR}:/www #映射项目目录
+      
+  php74: #创建 php的容器
+    container_name: ${PHP74_CONTAINER_NAME} #容器名称
+    image: php:${PHP74_VERSION} #镜像
+    expose:
+      - 9502
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    environment:
+        - TZ=$TZ
+    # build: ./php #直接到 ./php文件下找Dockerfile
+    volumes:
+      - ${ROOT_DIR}:/www #映射项目目录
+
+  nginx: #创建 nginx容器
+    container_name: ${NGINX_CONTAINER_NAME}
+    image: nginx:${NGINX_VERSION}
+    ports:  #映射 80和443端口到本机
+      - ${NGINX_HTTP_HOST_PORT}:80
+      - ${NGINX_HTTPS_HOST_PORT}:443
+    restart: always
+    environment:
+        - TZ=$TZ
+    volumes:
+      - ${ROOT_DIR}:/www:rw  #映射项目目录
+      - ${NGINX_CONFD_DIR}:/etc/nginx/conf.d:rw #映射配置目录
+      - ${NGINX_CONF_FILE}:/etc/nginx/nginx.conf:ro #映射配置文件
+      - ${NGINX_LOG_DIR}:/var/log/nginx:rw #映射日志文件
+      - ${NGINX_SSL_DIR}:/ssl:rw #ssl证书目录
+
+  mysql:
+    container_name: ${MYSQL_CONTAINER_NAME}
+    image: mysql:${MYSQL_VERSION}
+    volumes:
+      - ${MYSQL_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
+      - ${MYSQL_LOG_DIR}:/var/log/mysql:rw
+      - ${MYSQL_DATA_DIR}:/var/lib/mysql:rw
+    ports:
+      - ${MYSQL_HOST_PORT}:3306
+    restart: always
+    environment:
+      - TZ=$TZ
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} #root密码
+
+  redis: #创建 reids的容器
+    container_name: ${REDIS_CONTAINER_NAME}
+    image: redis:${REDIS_VERSION}
+    restart: always
+    environment:
+      - TZ=$TZ
+    ports:
+      - ${REDIS_HOST_PORT}:6379
+    volumes:
+      - ${REDIS_CONF_FILE}:/etc/redis/redis.conf
+      - ${REDIS_DATA_FILE}:/data:rw
+    command: /bin/sh -c "redis-server /etc/redis/redis.conf" # 指定配置文件
+    # entrypoint: ["redis-server", "/etc/redis.conf"]
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
