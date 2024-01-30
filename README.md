@@ -713,8 +713,6 @@ PHP74_FPM_CONF_FILE=./services/php74/php-fpm.conf
 PHP74_LOG_DIR=./logs/php74
 ```
 
-
-
 `docker-compose.yml`
 
 ```yml
@@ -731,7 +729,7 @@ services:
     # build: ./php #直接到 ./php文件下找Dockerfile
     volumes:
       - ${ROOT_DIR}:/www #映射项目目录
-      
+
   php74: #创建 php的容器
     container_name: ${PHP74_CONTAINER_NAME} #容器名称
     image: php:${PHP74_VERSION} #镜像
@@ -799,7 +797,7 @@ networks:
 
 Alpine比大多数发行版基础镜像小得多，见下图。
 
-![](/Users/tomato/Desktop/截屏2024-01-30%2014.00.57.png)
+![](https://raw.githubusercontent.com/huangyuxine/images/main/%E6%88%AA%E5%B1%8F2024-01-30%2014.00.57.png)
 
 其余不用的镜像删掉就好。
 
@@ -867,7 +865,7 @@ services:
     volumes:
       - ${ROOT_DIR}:/www #映射项目目录
       - ${PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
-      
+
   php74: #创建 php的容器
     build:
       context: ${PHP74_CONTEXT_DIR}
@@ -1012,7 +1010,7 @@ install-php-extensions swoole
 
 创建仓库，我的仓库名字为php83
 
-![](/Users/tomato/Desktop/截屏2024-01-30%2017.20.18.png)
+![](https://raw.githubusercontent.com/huangyuxine/images/main/截屏2024-01-30%2017.20.18.png)
 
 本地要先登录
 
@@ -1034,4 +1032,4 @@ docker push huangyuxine373/php83:latest
 
 如下
 
-![](/Users/tomato/Desktop/截屏2024-01-30%2018.01.41.png)
+![](https://raw.githubusercontent.com/huangyuxine/images/main/%E6%88%AA%E5%B1%8F2024-01-30%2018.01.41.png)
