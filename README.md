@@ -746,4 +746,215 @@ networks:
       driver: default
 ```
 
+更换镜像版本，使用 `alpine`
+
+Alpine比大多数发行版基础镜像小得多，见下图。
+
+![](/Users/tomato/Desktop/截屏2024-01-30%2014.00.57.png)
+
+其余不用的镜像删掉就好。
+
+# 实战三
+
+使用`Dockerfile`来构建新镜像，每次都得重新安装扩展太麻烦。
+
+php安装后默认的扩展如下。
+
+```
+Core
+ctype
+opcache
+date
+dom
+fileinfo
+filter
+hash
+iconv
+json
+libxml
+mbstring
+mysqlnd
+openssl
+pcre
+PDO
+pdo_sqlite
+Phar
+posix
+random
+readline
+Reflection
+session
+SimpleXML
+sodium
+SPL
+sqlite3
+standard
+tokenizer
+xml
+xmlreader
+xmlwriter
+zlib
+```
+
+基于已有的镜像去构建，扩展使用
+
+`Dockerfile`
+
+```yml
+version: '3'
+services:
+  php83: #创建 php的容器
+    build:
+      context: ${PHP_CONTEXT_DIR} #在哪个目录下找Dockerfile文件
+      args:
+        PHP_VERSION: php:${PHP_VERSION}
+        PHP_EXTENSIONS: ${PHP_EXTENSIONS}
+        TZ: "$TZ"
+    image: php83:1.0.0 #给构建的镜像起名字
+    container_name: ${PHP_CONTAINER_NAME} #容器名称
+    expose:
+      - 9501
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    volumes:
+      - ${ROOT_DIR}:/www #映射项目目录
+      - ${PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+      
+  php74: #创建 php的容器
+    build:
+      context: ${PHP74_CONTEXT_DIR}
+      args:
+        PHP_VERSION: php:${PHP74_VERSION}
+        PHP_EXTENSIONS: ${PHP74_EXTENSIONS}
+        TZ: "$TZ"
+    container_name: ${PHP74_CONTAINER_NAME} #容器名称
+    image: php74:1.0.0 #给构建的镜像起名字
+    expose:
+      - 9502
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    volumes:
+      - ${ROOT_DIR}:/www #映射项目目录
+      - ${PHP74_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+
+
+  nginx: #创建 nginx容器
+    container_name: ${NGINX_CONTAINER_NAME}
+    image: nginx:${NGINX_VERSION}
+    ports:  #映射 80和443端口到本机
+      - ${NGINX_HTTP_HOST_PORT}:80
+      - ${NGINX_HTTPS_HOST_PORT}:443
+    restart: always
+    environment:
+      TZ: $TZ
+    volumes:
+      - ${ROOT_DIR}:/www:rw  #映射项目目录
+      - ${NGINX_CONFD_DIR}:/etc/nginx/conf.d:rw #映射配置目录
+      - ${NGINX_CONF_FILE}:/etc/nginx/nginx.conf:ro #映射配置文件
+      - ${NGINX_LOG_DIR}:/var/log/nginx:rw #映射日志文件
+      - ${NGINX_SSL_DIR}:/ssl:rw #ssl证书目录
+
+  mysql:
+    container_name: ${MYSQL_CONTAINER_NAME}
+    image: mysql:${MYSQL_VERSION}
+    volumes:
+      - ${MYSQL_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
+      - ${MYSQL_LOG_DIR}:/var/log/mysql:rw
+      - ${MYSQL_DATA_DIR}:/var/lib/mysql:rw
+    ports:
+      - ${MYSQL_HOST_PORT}:3306
+    restart: always
+    environment:
+      TZ: $TZ
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} #root密码
+
+  redis: #创建 reids的容器
+    container_name: ${REDIS_CONTAINER_NAME}
+    image: redis:${REDIS_VERSION}
+    restart: always
+    environment:
+      TZ: $TZ
+    ports:
+      - ${REDIS_HOST_PORT}:6379
+    volumes:
+      - ${REDIS_CONF_FILE}:/etc/redis/redis.conf
+      - ${REDIS_DATA_FILE}:/data:rw
+    command: /bin/sh -c "redis-server /etc/redis/redis.conf" # 指定配置文件
+    # entrypoint: ["redis-server", "/etc/redis.conf"]
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+```
+
+`.env`
+
+```
+#项目目录
+ROOT_DIR=./www
+
+#数据目录
+DATA_DIR=./data
+
+#容器时区
+TZ=Asia/Shanghai
+
+#Nginx
+NGINX_VERSION=1.25.3-alpine
+NGINX_CONTAINER_NAME=nginx
+NGINX_HTTP_HOST_PORT=80
+NGINX_HTTPS_HOST_PORT=443
+NGINX_CONFD_DIR=./services/nginx/conf.d
+NGINX_CONF_FILE=./services/nginx/nginx.conf
+NGINX_SSL_DIR=./services/nginx/ssl
+NGINX_LOG_DIR=./logs/nginx
+
+#MySQL8.3
+MYSQL_VERSION=8.3
+MYSQL_CONTAINER_NAME=mysql83
+MYSQL_HOST_PORT=3306
+MYSQL_ROOT_PASSWORD=123123
+MYSQL_CONF_FILE=./services/mysql83/mysql.cnf
+MYSQL_DATA_DIR=./data/mysql83
+MYSQL_LOG_DIR=./logs/mysql83
+
+#Redis
+REDIS_VERSION=7.2.4-alpine
+REDIS_CONTAINER_NAME=redis
+REDIS_HOST_PORT=6379
+REDIS_CONF_FILE=./services/redis/redis.conf
+REDIS_DATA_FILE=./data/redis
+
+#PHP8.3
+PHP_VERSION=8.3.2-fpm-alpine
+PHP_CONTAINER_NAME=php83
+PHP_CONTEXT_DIR=./services/php83
+PHP_CONF_FILE=./services/php83/php.ini
+PHP_FPM_CONF_FILE=./services/php83/php-fpm.conf
+PHP_LOG_DIR=./logs/php83
+PHP_EXTENSIONS=pdo_mysql gd opcache redis bcmath
+
+
+#PHP7.4
+PHP74_VERSION=7.4.33-fpm-alpine
+PHP74_CONTAINER_NAME=php74
+PHP74_CONTEXT_DIR=./services/php83
+PHP74_CONF_FILE=./services/php74/php.ini
+PHP74_FPM_CONF_FILE=./services/php74/php-fpm.conf
+PHP74_LOG_DIR=./logs/php74
+PHP74_EXTENSIONS=pdo_mysql gd opcache redis bcmath
+```
+
+如果再基础上重新加扩展，则需要重新构建成最新的镜像
+
+```
+docker-compose build php83
+```
+
+快速安装扩展
+
+```
+install-php-extensions swoole
+```
+
 
