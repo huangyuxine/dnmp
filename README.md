@@ -701,9 +701,9 @@ REDIS_DATA_FILE=./data/redis
 #PHP8.3
 PHP_VERSION=8.3.2-fpm
 PHP_CONTAINER_NAME=php83
-PHP_CONF_FILE=./services/php80/php.ini
-PHP_FPM_CONF_FILE=./services/php80/php-fpm.conf
-PHP_LOG_DIR=./logs/php80
+PHP_CONF_FILE=./services/php83/php.ini
+PHP_FPM_CONF_FILE=./services/php83/php-fpm.conf
+PHP_LOG_DIR=./logs/php83
 
 #PHP7.4
 PHP74_VERSION=7.4.33-fpm
