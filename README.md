@@ -998,7 +998,7 @@ PHP74_EXTENSIONS=pdo_mysql gd opcache redis bcmath
 docker-compose build php83
 ```
 
-已有镜像的情况下，本地会生成一个名字为<none>的镜像，我这里的做法是删掉之前构建的镜像，重新执行。
+已有镜像的情况下，本地会生成一个名字为`<none>`的镜像，我这里的做法是删掉之前构建的镜像，重新执行。
 
 快速安装扩展，需要进入容器内部执行
 
