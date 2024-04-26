@@ -1006,6 +1006,21 @@ docker-compose build php83
 install-php-extensions swoole
 ```
 
+# 安装composer
+
+基于基础镜像构建，在DOCKERFIE文件中添加
+
+```dockerfile
+
+ARG COMPOSER_URL
+
+RUN curl -o /usr/bin/composer https://${COMPOSER_URL}/composer/composer.phar \
+    && chmod +x /usr/bin/composer
+ENV COMPOSER_HOME=/tmp/composer
+```
+
+
+
 # 推送镜像
 
 创建仓库，我的仓库名字为php83

@@ -1,6 +1,7 @@
 ARG PHP_VERSION
 FROM ${PHP_VERSION}
 
+ARG COMPOSER_URL
 ARG TZ
 ARG PHP_EXTENSIONS
 
@@ -13,5 +14,12 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 
 RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions "${PHP_EXTENSIONS}"
+
+
+#composer
+RUN curl -o /usr/bin/composer https://${COMPOSER_URL}/composer/composer.phar \
+    && chmod +x /usr/bin/composer
+ENV COMPOSER_HOME=/tmp/composer
+
 
 WORKDIR /www
