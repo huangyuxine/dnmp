@@ -563,6 +563,7 @@ docker-compose管理多个容器。
 
 ```
 docker-compose up -d #启动，如果本地没有镜像，会先拉取镜像
+docker-compose up --force-recreate -d #修改了yaml文件的情况，不重新build
 docker-compose ps #查看正在运行的容器
 docker-compose down #停止所有容器
 docker-compose restart #重启所有容器
@@ -1018,8 +1019,6 @@ RUN curl -o /usr/bin/composer https://${COMPOSER_URL}/composer/composer.phar \
     && chmod +x /usr/bin/composer
 ENV COMPOSER_HOME=/tmp/composer
 ```
-
-
 
 # 推送镜像
 
