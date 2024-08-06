@@ -18,13 +18,30 @@ services:
     volumes:
       - ${ROOT_DIR}:/www #映射项目目录
       - ${PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+
+  php81: #创建 php的容器
+    build:
+      context: ${PHP81_CONTEXT_DIR}
+      args:
+        PHP_VERSION: php:${PHP81_VERSION}
+        PHP_EXTENSIONS: ${PHP_EXTENSIONS}
+        COMPOSER_URL: ${COMPOSER_URL}
+        TZ: "$TZ"
+    image: php81:latest #给构建的镜像起名字
+    container_name: ${PHP81_CONTAINER_NAME} #容器名称
+    expose:
+      - 9503
+    restart: always  #如果容器意外退出，需要能够自动重启，以保证服务的可用性
+    volumes:
+      - ${ROOT_DIR}:/www #映射项目目录
+      - ${PHP81_CONF_FILE}:/usr/local/etc/php/php.ini:ro
       
   php74: #创建 php的容器
     build:
       context: ${PHP74_CONTEXT_DIR}
       args:
         PHP_VERSION: php:${PHP74_VERSION}
-        PHP_EXTENSIONS: ${PHP74_EXTENSIONS}
+        PHP_EXTENSIONS: ${PHP_EXTENSIONS}
         COMPOSER_URL: ${COMPOSER_URL}
         TZ: "$TZ"
     container_name: ${PHP74_CONTAINER_NAME} #容器名称
@@ -87,13 +104,70 @@ services:
       - NODE_ENV=dev
     volumes:
       - ${ROOT_DIR}:/www/:rw
-    expose:
-      - "8081"
+    ports:
+      - 3000:3000
+    # expose:
+    #   - 3000
     networks:
       - default
     stdin_open: true
     tty: true
 
+  rabbitmq:
+    build:
+      context: ${RABBITMQ_CONTEXT_DIR}
+      args:
+        RABBITMQ_VERSION: ${RABBITMQ_VERSION}
+        RABBITMQ_PLUGINS: ${RABBITMQ_PLUGINS}
+    image: rabbitmq:${RABBITMQ_VERSION}
+    container_name: ${RABBITMQ_CONTAINER_NAME}
+    restart: always
+    ports:
+      - "${RABBITMQ_HOST_PORT_C}:5672"
+      - "${RABBITMQ_HOST_PORT_S}:15672"
+    environment:
+        TZ: "$TZ"
+        RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+        RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
+    networks:
+          - default
+
+  elasticsearch:
+    build:
+      context: ./services/elasticsearch
+      args:
+        ELASTICSEARCH_VERSION: ${ELASTICSEARCH_VERSION}
+        ELASTICSEARCH_PLUGINS: ${ELASTICSEARCH_PLUGINS}
+    container_name: elasticsearch
+    image: elasticsearch:${ELASTICSEARCH_VERSION}
+    environment:
+      - TZ=$TZ
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ${DATA_DIR}/esdata:/usr/share/elasticsearch/data
+      - ${ELASTICSEARCH_CONF_FILE}:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ${ELASTICSEARCH_LOG4J2_CONF_FILE}:/usr/share/elasticsearch/config/log4j2.properties
+    hostname: elasticsearch
+    restart: always
+    ports:
+      - "${ELASTICSEARCH_HOST_PORT_C}:9200"
+      - "${ELASTICSEARCH_HOST_PORT_S}:9300"
+
+  kibana:
+    image: kibana:${KIBANA_VERSION}
+    container_name: kibana
+    environment:
+      TZ: "$TZ"
+      elasticsearch.hosts: http://elasticsearch:9200
+      I18N_LOCALE: "${KIBANA_I18N_LOCALE}"
+    hostname: kibana
+    depends_on:
+      - elasticsearch
+    restart: always
+    ports:
+      - "${KIBANA_HOST}:5601"
+      
 networks:
   default:
     driver: bridge
